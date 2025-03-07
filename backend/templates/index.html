@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Editor</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Upload and Edit Image</h1>
+    <input type="file" id="fileInput">
+    <select id="method">
+        <option value="pillow">Pillow</option>
+        <option value="gimp">GIMP</option>
+    </select>
+    <button onclick="uploadImage()">Upload</button>
+    <img id="resultImage" src="">
+
+    <script>
+   function uploadImage() {
+    let file = document.getElementById("fileInput").files[0];
+    let method = document.getElementById("method").value;
+    let formData = new FormData();
+    
+    if (!file) {
+        alert("Please select a file first!");
+        return;
+    }
+
+    formData.append("file", file);
+    formData.append("method", method);
+
+    $.ajax({
+        url: "/upload",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            let timestamp = new Date().getTime();  // مقدار یکتای زمانی برای جلوگیری از کش
+            let imageUrl = response.image_url + "?t=" + timestamp;  
+            console.log("Updated Image URL:", imageUrl);
+            $("#resultImage").attr("src", imageUrl);
+        },
+        error: function(xhr, status, error) {
+            console.error("Upload error:", xhr.responseText);
+            alert("Error uploading image: " + xhr.responseText);
+        }
+    });
+}
+    </script>
+</body>
+</html>
+
