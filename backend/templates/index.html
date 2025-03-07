@@ -4,51 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Editor</title>
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>Upload and Edit Image</h1>
-    <input type="file" id="fileInput">
-    <select id="method">
-        <option value="pillow">Pillow</option>
-        <option value="gimp">GIMP</option>
-    </select>
-    <button onclick="uploadImage()">Upload</button>
-    <img id="resultImage" src="">
 
-    <script>
-   function uploadImage() {
-    let file = document.getElementById("fileInput").files[0];
-    let method = document.getElementById("method").value;
-    let formData = new FormData();
-    
-    if (!file) {
-        alert("Please select a file first!");
-        return;
-    }
+    <div class="container">
+        <h1>Photo Editor</h1>
 
-    formData.append("file", file);
-    formData.append("method", method);
+        <!-- تب‌های تنظیمات -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'HSL')">🎨 HSL</button>
+            <button class="tab-button" onclick="openTab(event, 'Brightness')">🌞 Brightness</button>
+            <button class="tab-button" onclick="openTab(event, 'Contrast')">⚡ Contrast</button>
+        </div>
 
-    $.ajax({
-        url: "/upload",
-        type: "POST",
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            let timestamp = new Date().getTime();  // مقدار یکتای زمانی برای جلوگیری از کش
-            let imageUrl = response.image_url + "?t=" + timestamp;  
-            console.log("Updated Image URL:", imageUrl);
-            $("#resultImage").attr("src", imageUrl);
-        },
-        error: function(xhr, status, error) {
-            console.error("Upload error:", xhr.responseText);
-            alert("Error uploading image: " + xhr.responseText);
-        }
-    });
-}
-    </script>
+        <div class="tab-content active" id="HSL">
+            <div class="color-palette">
+                <div class="color-box red"></div>
+                <div class="color-box orange"></div>
+                <div class="color-box yellow"></div>
+                <div class="color-box green"></div>
+                <div class="color-box blue"></div>
+                <div class="color-box purple"></div>
+            </div>
+
+            <div class="slider-container">
+                <label>Hue</label>
+                <input type="range" id="hue" min="-180" max="180" value="0" step="1">
+            </div>
+            <div class="slider-container">
+                <label>Saturation</label>
+                <input type="range" id="saturation" min="-100" max="100" value="0" step="1">
+            </div>
+            <div class="slider-container">
+                <label>Luminance</label>
+                <input type="range" id="luminance" min="-100" max="100" value="0" step="1">
+            </div>
+        </div>
+
+        <div class="tab-content" id="Brightness">
+            <p>Brightness Adjustment Coming Soon...</p>
+        </div>
+
+        <div class="tab-content" id="Contrast">
+            <p>Contrast Adjustment Coming Soon...</p>
+        </div>
+
+        <!-- نمایش تصویر و کنترل‌ها -->
+        <div class="image-container">
+            <input type="file" id="fileInput" onchange="uploadFile()">
+            <img id="resultImage" src="" alt="Upload an image" style="display:none;">
+            <button id="downloadBtn" style="display:none;">Download</button>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
 </body>
 </html>
-
