@@ -1,23 +1,25 @@
 from flask import Blueprint, request, jsonify, send_file
 import os
 import time
-from services.image_processor import process_image  # اضافه کردن تابع پردازش تصویر
+from backend.services.image_processor import process_with_gimp
+from flask import Flask, render_template
 
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
 image_routes = Blueprint('image_routes', __name__)
 
 TEMP_STORAGE = "backend/static/uploads"
 OUTPUT_STORAGE = "backend/static/processed"
 
-# اطمینان از وجود دایرکتوری‌های ضروری
+# Ensure required directories exist
 for folder in [TEMP_STORAGE, OUTPUT_STORAGE]:
     os.makedirs(folder, exist_ok=True)
 
-
 @image_routes.route("/upload", methods=["POST"])
 def upload_image():
-    """آپلود تصویر و ذخیره آن در سرور"""
-    cleanup_images()  # حذف فایل‌های قدیمی
-
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
@@ -26,57 +28,44 @@ def upload_image():
     file_path = os.path.join(TEMP_STORAGE, image_id)
     file.save(file_path)
 
-    print(f"✅ Image uploaded: {file_path}")  # نمایش مسیر ذخیره شده در لاگ سرور
-
-    return jsonify({
-        "message": "File uploaded successfully",
-        "image_id": image_id
-    })
-
+    return jsonify({"message": "File uploaded successfully", "image_id": image_id})
 
 
 @image_routes.route("/apply_hsl", methods=["POST"])
 def apply_hsl():
-    """اعمال تغییرات HSL روی تصویر"""
-    data = request.get_json()
+    data = request.json
+    print("📥 Received HSL Request:", data)
+
     image_id = data.get("image_id")
-    hue = int(data.get("hue", 0))
-    saturation = int(data.get("saturation", 0))
-    luminance = int(data.get("luminance", 0))
-    hue_range = data.get("hue_range", None)  # دریافت محدوده رنگ انتخاب‌شده
+    hue = int(data.get("hue"))
+    saturation = int(data.get("saturation"))
+    luminance = int(data.get("luminance"))
+    color_index = int(data.get("color_index"))
 
     input_path = os.path.join(TEMP_STORAGE, image_id)
-
     if not os.path.exists(input_path):
-        print(f"❌ Image not found: {input_path}")
         return jsonify({"error": "Image not found"}), 404
 
-    print(f"🎨 Processing image with HSL: Hue={hue}, Saturation={saturation}, Luminance={luminance}, Hue Range={hue_range}")
+    print("🚀 Processing with GIMP:", input_path, hue, saturation, luminance, color_index)
 
-    output_path = process_image(input_path, hue, saturation, luminance, hue_range)
-    output_filename = os.path.basename(output_path)
+    output_path = process_with_gimp(input_path, hue, saturation, luminance, color_index)
 
     return jsonify({
-        "image_url": f"/static/processed/{output_filename}",
-        "download_url": f"/download/{output_filename}"
+        "image_url": f"/static/processed/{image_id}",
+        "download_url": f"/download/{image_id}"
     })
 
 @image_routes.route("/download/<image_id>")
 def download_image(image_id):
-    """دانلود فایل پردازش‌شده"""
-
-    # بررسی مسیر درست برای ذخیره‌شده تصویر پردازش‌شده
-    output_path = os.path.join(os.getcwd(), OUTPUT_STORAGE, image_id)
-
+    """Handles processed image downloads"""
+    output_path = os.path.join(OUTPUT_STORAGE, image_id)
     if not os.path.exists(output_path):
-        print(f"❌ Download failed: {output_path} not found!")  # نمایش خطا در لاگ سرور
-        return jsonify({"error": f"File not found: {output_path}"}), 404
+        return jsonify({"error": "File not found"}), 404
 
     return send_file(output_path, as_attachment=True)
 
-
 def cleanup_images():
-    """حذف تصاویر قدیمی بعد از ۶۰ روز"""
+    """Deletes images older than 60 days"""
     now = time.time()
     for folder in [TEMP_STORAGE, OUTPUT_STORAGE]:
         for filename in os.listdir(folder):

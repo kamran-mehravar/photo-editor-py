@@ -4,61 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Editor</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-    <div class="container">
-        <h1>Photo Editor</h1>
+<form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" id="imageUpload" name="file">
+    <button type="submit">Upload Image</button>
+</form>
 
-        <!-- تب‌های تنظیمات -->
-        <div class="tabs">
-            <button class="tab-button active" onclick="openTab(event, 'HSL')">🎨 HSL</button>
-            <button class="tab-button" onclick="openTab(event, 'Brightness')">🌞 Brightness</button>
-            <button class="tab-button" onclick="openTab(event, 'Contrast')">⚡ Contrast</button>
-        </div>
+<div id="colorPalette">
+    <button class="color-box" style="background-color: red;" data-color="red"></button>
+    <button class="color-box" style="background-color: green;" data-color="green"></button>
+    <button class="color-box" style="background-color: blue;" data-color="blue"></button>
+</div>
 
-        <div class="tab-content active" id="HSL">
-            <div class="color-palette">
-                <div class="color-box red"></div>
-                <div class="color-box orange"></div>
-                <div class="color-box yellow"></div>
-                <div class="color-box green"></div>
-                <div class="color-box blue"></div>
-                <div class="color-box purple"></div>
-            </div>
+<img id="uploadedImage" src="" style="display:none; max-width:100%;">
 
-            <div class="slider-container">
-                <label>Hue</label>
-                <input type="range" id="hue" min="-180" max="180" value="0" step="1">
-            </div>
-            <div class="slider-container">
-                <label>Saturation</label>
-                <input type="range" id="saturation" min="-100" max="100" value="0" step="1">
-            </div>
-            <div class="slider-container">
-                <label>Luminance</label>
-                <input type="range" id="luminance" min="-100" max="100" value="0" step="1">
-            </div>
-        </div>
+<input type="range" id="hue" min="-180" max="180" value="0">
+<input type="range" id="saturation" min="-100" max="100" value="0">
+<input type="range" id="luminance" min="-100" max="100" value="0">
 
-        <div class="tab-content" id="Brightness">
-            <p>Brightness Adjustment Coming Soon...</p>
-        </div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 
-        <div class="tab-content" id="Contrast">
-            <p>Contrast Adjustment Coming Soon...</p>
-        </div>
-
-        <!-- نمایش تصویر و کنترل‌ها -->
-        <div class="image-container">
-            <input type="file" id="fileInput" onchange="uploadFile()">
-            <img id="resultImage" src="" alt="Upload an image" style="display:none;">
-            <button id="downloadBtn" style="display:none;">Download</button>
-        </div>
-    </div>
-
-    <script src="/static/script.js"></script>
 </body>
 </html>
