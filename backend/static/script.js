@@ -30,7 +30,7 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
     let fileInput = document.getElementById('imageUpload').files[0];
 
     if (!fileInput) {
-        alert("❌ لطفاً یک فایل انتخاب کنید.");
+        alert("❌ Please chose a file");
         return;
     }
 
@@ -43,7 +43,7 @@ document.getElementById('uploadForm').addEventListener('submit', function(event)
     .then(response => response.json())
     .then(data => {
         if (data.error) {
-            alert("❌ خطا: " + data.error);
+            alert("❌ Error: " + data.error);
         } else {
             console.log("✅ Image uploaded:", data);
             uploadedFile = data.image_id;
@@ -79,7 +79,7 @@ function applyHSL() {
         },
         error: function(xhr) {
             console.error("❌ Processing error:", xhr.responseText);
-            alert("مشکلی در پردازش تصویر به‌وجود آمده!");
+            alert("There is a Problem during the process!");
         }
     });
 }

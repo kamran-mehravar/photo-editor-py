@@ -63,7 +63,7 @@ def apply_hsl():
     if not os.path.exists(input_path):
         return jsonify({"error": "Image not found"}), 404
 
-    # اجرای GIMP با مسیرهای کامل
+    # GIMP با مسیرهای کامل
     cmd = f'gimp -i -b \'(batch-hsl "{os.path.abspath(input_path)}" "{os.path.abspath(output_path)}" {hue} {saturation} {luminance})\' -b \'(gimp-quit 0)\''
     os.system(cmd)
 
