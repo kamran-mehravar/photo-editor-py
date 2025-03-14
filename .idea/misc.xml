@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.10 (photo-editor)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10 (photo-editor)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10 virtualenv at ~/Desktop/photo-editor/venv" project-jdk-type="Python SDK" />
 </project>

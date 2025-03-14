@@ -1,22 +1,16 @@
 from flask import Blueprint, request, jsonify, send_file
 import os
 import time
-from backend.services.image_processor import process_with_gimp
-from flask import Flask, render_template
+from backend.image_processor import process_with_opencv, process_with_style_transfer
 
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return render_template('index.html')
 image_routes = Blueprint('image_routes', __name__)
 
-TEMP_STORAGE = "backend/static/uploads"
-OUTPUT_STORAGE = "backend/static/processed"
+UPLOAD_FOLDER = "static/uploads"
+PROCESSED_FOLDER = "static/processed"
 
-# Ensure required directories exist
-for folder in [TEMP_STORAGE, OUTPUT_STORAGE]:
-    os.makedirs(folder, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(PROCESSED_FOLDER, exist_ok=True)
+
 
 @image_routes.route("/upload", methods=["POST"])
 def upload_image():
@@ -25,50 +19,62 @@ def upload_image():
 
     file = request.files["file"]
     image_id = f"{int(time.time())}_{file.filename}"
-    file_path = os.path.join(TEMP_STORAGE, image_id)
+    file_path = os.path.join(UPLOAD_FOLDER, image_id)
     file.save(file_path)
 
-    return jsonify({"message": "File uploaded successfully", "image_id": image_id})
+    return jsonify({"image_id": image_id, "image_url": f"/static/uploads/{image_id}"})
 
 
 @image_routes.route("/apply_hsl", methods=["POST"])
 def apply_hsl():
     data = request.json
-    print("📥 Received HSL Request:", data)
-
     image_id = data.get("image_id")
     hue = int(data.get("hue"))
     saturation = int(data.get("saturation"))
     luminance = int(data.get("luminance"))
-    color_index = int(data.get("color_index"))
 
-    input_path = os.path.join(TEMP_STORAGE, image_id)
+    input_path = os.path.join(UPLOAD_FOLDER, image_id)
     if not os.path.exists(input_path):
         return jsonify({"error": "Image not found"}), 404
 
-    print("🚀 Processing with GIMP:", input_path, hue, saturation, luminance, color_index)
-
-    output_path = process_with_gimp(input_path, hue, saturation, luminance, color_index)
+    try:
+        # استفاده از پردازش OpenCV برای تنظیمات HSL
+        output_path = process_with_opencv(input_path, hue, saturation, luminance)
+    except Exception as e:
+        print("Error during OpenCV processing:", e)
+        return jsonify({"error": f"Error during processing: {str(e)}"}), 500
 
     return jsonify({
-        "image_url": f"/static/processed/{image_id}",
-        "download_url": f"/download/{image_id}"
+        "image_url": f"/static/processed/{os.path.basename(output_path)}",
+        "download_url": f"/download/{os.path.basename(output_path)}"
     })
+
+
+@image_routes.route("/apply_style", methods=["POST"])
+def apply_style():
+    data = request.json
+    image_id = data.get("image_id")
+    model_name = data.get("model_name", "candy")  # مدل پیش‌فرض 'candy'
+
+    input_path = os.path.join(UPLOAD_FOLDER, image_id)
+    if not os.path.exists(input_path):
+        return jsonify({"error": "Image not found"}), 404
+
+    try:
+        output_path = process_with_style_transfer(input_path, model_name)
+    except Exception as e:
+        print("Error during style transfer:", e)
+        return jsonify({"error": f"Error during style transfer: {str(e)}"}), 500
+
+    return jsonify({
+        "image_url": f"/static/processed/{os.path.basename(output_path)}",
+        "download_url": f"/download/{os.path.basename(output_path)}"
+    })
+
 
 @image_routes.route("/download/<image_id>")
 def download_image(image_id):
-    """Handles processed image downloads"""
-    output_path = os.path.join(OUTPUT_STORAGE, image_id)
+    output_path = os.path.join(PROCESSED_FOLDER, image_id)
     if not os.path.exists(output_path):
         return jsonify({"error": "File not found"}), 404
-
     return send_file(output_path, as_attachment=True)
-
-def cleanup_images():
-    """Deletes images older than 60 days"""
-    now = time.time()
-    for folder in [TEMP_STORAGE, OUTPUT_STORAGE]:
-        for filename in os.listdir(folder):
-            file_path = os.path.join(folder, filename)
-            if os.path.isfile(file_path) and now - os.path.getmtime(file_path) > 60 * 24 * 60 * 60:
-                os.remove(file_path)
