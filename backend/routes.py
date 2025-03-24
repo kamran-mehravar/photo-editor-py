@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, send_file
 import os
 import time
-from backend.image_processor import process_with_opencv, process_with_style_transfer
+from backend.image_processor import process_with_skimage_color_range, process_with_style_transfer
 
 image_routes = Blueprint('image_routes', __name__)
 
@@ -10,7 +10,6 @@ PROCESSED_FOLDER = "static/processed"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
-
 
 @image_routes.route("/upload", methods=["POST"])
 def upload_image():
@@ -24,24 +23,26 @@ def upload_image():
 
     return jsonify({"image_id": image_id, "image_url": f"/static/uploads/{image_id}"})
 
-
 @image_routes.route("/apply_hsl", methods=["POST"])
 def apply_hsl():
     data = request.json
     image_id = data.get("image_id")
-    hue = int(data.get("hue"))
-    saturation = int(data.get("saturation"))
-    luminance = int(data.get("luminance"))
+    hue = int(data.get("hue", 0))
+    saturation = int(data.get("saturation", 0))
+    luminance = int(data.get("luminance", 0))
+    selected_color = data.get("color", None)  # مثلاً 'red', 'blue', 'green', ...
 
     input_path = os.path.join(UPLOAD_FOLDER, image_id)
     if not os.path.exists(input_path):
         return jsonify({"error": "Image not found"}), 404
 
     try:
-        # استفاده از پردازش OpenCV برای تنظیمات HSL
-        output_path = process_with_opencv(input_path, hue, saturation, luminance)
+        # فراخوانی تابع جدید با استفاده از skimage و پالت رنگی انتخابی
+        output_path = process_with_skimage_color_range(
+            input_path, hue, saturation, luminance, selected_color
+        )
     except Exception as e:
-        print("Error during OpenCV processing:", e)
+        print("Error during skimage processing:", e)
         return jsonify({"error": f"Error during processing: {str(e)}"}), 500
 
     return jsonify({
@@ -49,12 +50,11 @@ def apply_hsl():
         "download_url": f"/download/{os.path.basename(output_path)}"
     })
 
-
 @image_routes.route("/apply_style", methods=["POST"])
 def apply_style():
     data = request.json
     image_id = data.get("image_id")
-    model_name = data.get("model_name", "candy")  # مدل پیش‌فرض 'candy'
+    model_name = data.get("model_name", "candy")
 
     input_path = os.path.join(UPLOAD_FOLDER, image_id)
     if not os.path.exists(input_path):
@@ -70,7 +70,6 @@ def apply_style():
         "image_url": f"/static/processed/{os.path.basename(output_path)}",
         "download_url": f"/download/{os.path.basename(output_path)}"
     })
-
 
 @image_routes.route("/download/<image_id>")
 def download_image(image_id):
