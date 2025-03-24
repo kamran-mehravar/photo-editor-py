@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, send_file
 import os
 import time
-from backend.image_processor import process_with_skimage_color_range, process_with_style_transfer
+from backend.image_processor import process_with_skimage_color_range, process_with_style_transfer, process_with_temperature_tint
 
 image_routes = Blueprint('image_routes', __name__)
 
@@ -76,4 +76,44 @@ def download_image(image_id):
     output_path = os.path.join(PROCESSED_FOLDER, image_id)
     if not os.path.exists(output_path):
         return jsonify({"error": "File not found"}), 404
-    return send_file(output_path, as_attachment=True)
+    return send_file(output_path, as_attachment=True, attachment_filename=image_id)
+
+
+@image_routes.route("/apply_temperature_tint", methods=["POST"])
+def apply_temperature_tint():
+    data = request.json
+    image_id = data.get("image_id")
+    temperature_factor = float(data.get("temperature_factor", 1.0))
+    red_factor = float(data.get("red_factor", 1.0))
+    blue_factor = float(data.get("blue_factor", 1.0))
+    vibrancy_factor = float(data.get("vibrancy_factor", 1.0))
+    saturation_factor = float(data.get("saturation_factor", 1.0))
+
+    input_path = os.path.join(UPLOAD_FOLDER, image_id)
+    if not os.path.exists(input_path):
+        return jsonify({"error": "Image not found"}), 404
+
+    try:
+        output_path = process_with_temperature_tint(input_path, temperature_factor, red_factor, blue_factor,
+                                                    vibrancy_factor, saturation_factor)
+    except Exception as e:
+        print("Error during temperature and tint adjustment:", e)
+        return jsonify({"error": f"Error during processing: {str(e)}"}), 500
+
+    return jsonify({
+        "temperature_image_url": f"/static/processed/{os.path.basename(output_path)}",
+        "download_url": f"/download/{os.path.basename(output_path)}"
+    })
+@image_routes.route("/reset_color", methods=["POST"])
+def reset_color():
+    data = request.json
+    image_id = data.get("image_id")
+
+    input_path = os.path.join(UPLOAD_FOLDER, image_id)
+    if not os.path.exists(input_path):
+        return jsonify({"error": "Image not found"}), 404
+
+    return jsonify({
+        "image_url": f"/static/uploads/{image_id}",
+        "download_url": f"/download/{image_id}"
+    })

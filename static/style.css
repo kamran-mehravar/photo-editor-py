@@ -1,0 +1,29 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+}
+
+#uploadedImage {
+    margin-top: 20px;
+    max-width: 80%;
+}
+
+input[type="range"] {
+    width: 300px;
+    margin: 10px;
+}
+
+/* Style for color palette buttons */
+.colorBtn {
+    width: 40px;
+    height: 40px;
+    margin: 5px;
+    border: 2px solid #ccc;
+    cursor: pointer;
+    outline: none;
+}
+
+.colorBtn.active {
+    border: 3px solid #000;
+}
