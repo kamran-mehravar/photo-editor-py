@@ -70,31 +70,32 @@
  <!-- Light Adjustments Controls -->
     <div id="lightControls" style="display:none;">
         <label for="dehaze">Dehaze:</label>
-        <input type="range" id="dehaze" min="0" max="2" step="0.1" value="1">
+        <input type="range" id="dehaze" min="-1" max="1" step="0.1" value="0">
 
         <label for="exposure">Exposure:</label>
-        <input type="range" id="exposure" min="0.1" max="2" step="0.1" value="1">
+        <input type="range" id="exposure" min="-1" max="1" step="0.1" value="0">
 
         <label for="brightness">Brightness:</label>
-        <input type="range" id="brightness" min="0.1" max="2" step="0.1" value="1">
+        <input type="range" id="brightness" min="-1" max="1" step="0.1" value="0">
 
         <label for="contrast">Contrast:</label>
-        <input type="range" id="contrast" min="0.1" max="2" step="0.1" value="1">
+        <input type="range" id="contrast" min="-1" max="1" step="0.1" value="0">
 
         <label for="highlights">Highlights:</label>
-        <input type="range" id="highlights" min="0.1" max="2" step="0.1" value="1">
+        <input type="range" id="highlights" min="-1" max="1" step="0.1" value="0">
 
         <label for="shadows">Shadows:</label>
-        <input type="range" id="shadows" min="0.1" max="2" step="0.1" value="1">
+        <input type="range" id="shadows" min="-1" max="1" step="0.1" value="0">
 
         <label for="whites">Whites:</label>
-        <input type="range" id="whites" min="90" max="100" step="1" value="98">
+        <input type="range" id="whites" min="-1" max="1" step="0.1" value="0">
 
         <label for="blacks">Blacks:</label>
-        <input type="range" id="blacks" min="0" max="10" step="1" value="2">
+        <input type="range" id="blacks" min="-1" max="1" step="0.1" value="0">
 
+        <!-- دکمه‌های ریست و دانلود مخصوص تب Light -->
         <button id="resetLightBtn">Reset Light</button>
-        <button id="downloadLightBtn">Download Light Image</button>
+        <button id="downloadLightBtn" style="display:none;">Download Light Image</button>
     </div>
 
     <img id="uploadedImage" src="" style="display:none; max-width:100%;">

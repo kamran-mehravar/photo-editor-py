@@ -265,6 +265,25 @@ document.getElementById("resetColorBtn").addEventListener("click", function() {
     // برای اعمال تغییرات پس از ریست، یک بار درخواست ارسال شود
     applyColorFilters();
 });
+// Tab switching logic
+document.getElementById("tabHSL").addEventListener("click", function() {
+    document.getElementById("hslControls").style.display = "block";
+    document.getElementById("colorControls").style.display = "none";
+    document.getElementById("lightControls").style.display = "none";
+    this.classList.add("active");
+    document.getElementById("tabColor").classList.remove("active");
+    document.getElementById("tabLight").classList.remove("active");
+});
+
+document.getElementById("tabColor").addEventListener("click", function() {
+    document.getElementById("hslControls").style.display = "none";
+    document.getElementById("colorControls").style.display = "block";
+    document.getElementById("lightControls").style.display = "none";
+    this.classList.add("active");
+    document.getElementById("tabHSL").classList.remove("active");
+    document.getElementById("tabLight").classList.remove("active");
+});
+
 document.getElementById("tabLight").addEventListener("click", function() {
     document.getElementById("hslControls").style.display = "none";
     document.getElementById("colorControls").style.display = "none";
@@ -300,7 +319,7 @@ function applyLightFilters() {
             if (data.light_image_url) {
                 document.getElementById("uploadedImage").src = data.light_image_url + "?t=" + new Date().getTime();
                 finalProcessedImage = data.light_image_url;
-                updateDownloadButton();
+                updateLightDownloadButton();
             } else {
                 console.error("Invalid response", data);
             }
@@ -309,16 +328,7 @@ function applyLightFilters() {
     }, 300);
 }
 
-function updateDownloadButton() {
-    let downloadBtn = document.getElementById("downloadLightBtn");
-    downloadBtn.style.display = "inline-block";
-    downloadBtn.onclick = function() {
-        if (finalProcessedImage) {
-            window.open(finalProcessedImage, "_blank");
-        }
-    };
-}
-
+// رویداد اسلایدرهای تب Light
 document.getElementById("dehaze").addEventListener("input", applyLightFilters);
 document.getElementById("exposure").addEventListener("input", applyLightFilters);
 document.getElementById("brightness").addEventListener("input", applyLightFilters);
@@ -328,36 +338,38 @@ document.getElementById("shadows").addEventListener("input", applyLightFilters);
 document.getElementById("whites").addEventListener("input", applyLightFilters);
 document.getElementById("blacks").addEventListener("input", applyLightFilters);
 
-// Reset Color Filters button
-document.getElementById("resetColorBtn").addEventListener("click", function() {
-    document.getElementById("temp").value = 1;
-    document.getElementById("tint_red").value = 1;
-    document.getElementById("tint_blue").value = 1;
-    document.getElementById("vibrancy").value = 1;
-    document.getElementById("sat_color").value = 1;
+// دکمه ریست تب Light
+document.getElementById("resetLightBtn").addEventListener("click", function() {
+    // بازگردانی مقادیر پیش‌فرض برای اسلایدرهای Light (مقدار پیش‌فرض 0)
+    document.getElementById("dehaze").value = 0;
+    document.getElementById("exposure").value = 0;
+    document.getElementById("brightness").value = 0;
+    document.getElementById("contrast").value = 0;
+    document.getElementById("highlights").value = 0;
+    document.getElementById("shadows").value = 0;
+    document.getElementById("whites").value = 0;
+    document.getElementById("blacks").value = 0;
 
-    document.getElementById("resetLightBtn").addEventListener("click", function() {
-    // بازگردانی مقادیر پیش‌فرض برای اسلایدرهای Light
-    document.getElementById("dehaze").value = 1;
-    document.getElementById("exposure").value = 1;
-    document.getElementById("brightness").value = 1;
-    document.getElementById("contrast").value = 1;
-    document.getElementById("highlights").value = 1;
-    document.getElementById("shadows").value = 1;
-    document.getElementById("whites").value = 98;
-    document.getElementById("blacks").value = 2;
+    // بازگرداندن تصویر به حالت اولیه آپلود شده
+    document.getElementById("uploadedImage").src = "/static/uploads/" + uploadedFile;
 
-    // فراخوانی تابع برای اعمال تغییرات جدید
-    applyLightFilters();
+    // (اختیاری) فراخوانی applyLightFilters در این حالت لازم نیست چون با مقدار 0 هیچ تغییری ایجاد نمی‌شود
 });
 
-    fetch("/upload", { method: "POST", body: new FormData(document.getElementById("uploadForm")) })
-        .then(response => response.json())
-        .then(data => {
-            uploadedFile = data.image_id;
-            document.getElementById("uploadedImage").src = "/static/uploads/" + uploadedFile;
-        })
-        .catch(error => console.error("Error resetting image:", error));
+// دکمه دانلود تب Light
+function getFileNameFromUrl(url) {
+    return url.substring(url.lastIndexOf('/') + 1);
+}
 
-    applyLightFilters();
-});
+function updateLightDownloadButton() {
+    let downloadBtn = document.getElementById("downloadLightBtn");
+    downloadBtn.style.display = "inline-block";
+    downloadBtn.onclick = function() {
+        if (finalProcessedImage) {
+            let a = document.createElement('a');
+            a.href = finalProcessedImage;
+            a.download = getFileNameFromUrl(finalProcessedImage);
+            a.click();
+        }
+    };
+}
