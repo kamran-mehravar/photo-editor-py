@@ -10,6 +10,7 @@ let baseImages = {}; // دیکشنری نگهدارندهٔ تصویر پایه 
 let debounceTimer = null;
 
 let finalProcessedImage = null; // مسیر تصویر نهایی پردازش شده
+let debounceTimerLight = null;
 
 // Handle file upload
 document.getElementById("uploadForm").addEventListener("submit", function(event) {
@@ -263,4 +264,100 @@ document.getElementById("resetColorBtn").addEventListener("click", function() {
 
     // برای اعمال تغییرات پس از ریست، یک بار درخواست ارسال شود
     applyColorFilters();
+});
+document.getElementById("tabLight").addEventListener("click", function() {
+    document.getElementById("hslControls").style.display = "none";
+    document.getElementById("colorControls").style.display = "none";
+    document.getElementById("lightControls").style.display = "block";
+    this.classList.add("active");
+    document.getElementById("tabHSL").classList.remove("active");
+    document.getElementById("tabColor").classList.remove("active");
+});
+
+//------------------------------------applyLightFilters--------------------------
+function applyLightFilters() {
+    clearTimeout(debounceTimerLight);
+    debounceTimerLight = setTimeout(function() {
+        let payload = {
+            image_id: uploadedFile,
+            dehaze: parseFloat(document.getElementById("dehaze").value),
+            exposure: parseFloat(document.getElementById("exposure").value),
+            brightness: parseFloat(document.getElementById("brightness").value),
+            contrast: parseFloat(document.getElementById("contrast").value),
+            highlights: parseFloat(document.getElementById("highlights").value),
+            shadows: parseFloat(document.getElementById("shadows").value),
+            whites: parseFloat(document.getElementById("whites").value),
+            blacks: parseFloat(document.getElementById("blacks").value)
+        };
+
+        fetch("/apply_light", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.light_image_url) {
+                document.getElementById("uploadedImage").src = data.light_image_url + "?t=" + new Date().getTime();
+                finalProcessedImage = data.light_image_url;
+                updateDownloadButton();
+            } else {
+                console.error("Invalid response", data);
+            }
+        })
+        .catch(error => console.error("Error applying light filters:", error));
+    }, 300);
+}
+
+function updateDownloadButton() {
+    let downloadBtn = document.getElementById("downloadLightBtn");
+    downloadBtn.style.display = "inline-block";
+    downloadBtn.onclick = function() {
+        if (finalProcessedImage) {
+            window.open(finalProcessedImage, "_blank");
+        }
+    };
+}
+
+document.getElementById("dehaze").addEventListener("input", applyLightFilters);
+document.getElementById("exposure").addEventListener("input", applyLightFilters);
+document.getElementById("brightness").addEventListener("input", applyLightFilters);
+document.getElementById("contrast").addEventListener("input", applyLightFilters);
+document.getElementById("highlights").addEventListener("input", applyLightFilters);
+document.getElementById("shadows").addEventListener("input", applyLightFilters);
+document.getElementById("whites").addEventListener("input", applyLightFilters);
+document.getElementById("blacks").addEventListener("input", applyLightFilters);
+
+// Reset Color Filters button
+document.getElementById("resetColorBtn").addEventListener("click", function() {
+    document.getElementById("temp").value = 1;
+    document.getElementById("tint_red").value = 1;
+    document.getElementById("tint_blue").value = 1;
+    document.getElementById("vibrancy").value = 1;
+    document.getElementById("sat_color").value = 1;
+
+    document.getElementById("resetLightBtn").addEventListener("click", function() {
+    // بازگردانی مقادیر پیش‌فرض برای اسلایدرهای Light
+    document.getElementById("dehaze").value = 1;
+    document.getElementById("exposure").value = 1;
+    document.getElementById("brightness").value = 1;
+    document.getElementById("contrast").value = 1;
+    document.getElementById("highlights").value = 1;
+    document.getElementById("shadows").value = 1;
+    document.getElementById("whites").value = 98;
+    document.getElementById("blacks").value = 2;
+
+    // فراخوانی تابع برای اعمال تغییرات جدید
+    applyLightFilters();
+});
+
+    fetch("/upload", { method: "POST", body: new FormData(document.getElementById("uploadForm")) })
+        .then(response => response.json())
+        .then(data => {
+            uploadedFile = data.image_id;
+            document.getElementById("uploadedImage").src = "/static/uploads/" + uploadedFile;
+        })
+        .catch(error => console.error("Error resetting image:", error));
+
+    applyLightFilters();
 });

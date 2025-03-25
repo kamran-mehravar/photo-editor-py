@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify, send_file
 import os
 import time
-from backend.image_processor import process_with_skimage_color_range, process_with_style_transfer, process_with_temperature_tint
+from backend.image_processor import process_with_skimage_color_range, process_with_style_transfer, \
+    process_with_temperature_tint, process_with_light_adjustments
 
 image_routes = Blueprint('image_routes', __name__)
 
@@ -116,4 +117,36 @@ def reset_color():
     return jsonify({
         "image_url": f"/static/uploads/{image_id}",
         "download_url": f"/download/{image_id}"
+    })
+
+
+@image_routes.route("/apply_light", methods=["POST"])
+def apply_light():
+    data = request.json
+    image_id = data.get("image_id")
+    dehaze = float(data.get("dehaze", 1.0))
+    exposure_val = float(data.get("exposure", 1.0))
+    brightness = float(data.get("brightness", 1.0))
+    contrast = float(data.get("contrast", 1.0))
+    highlights = float(data.get("highlights", 1.0))
+    shadows = float(data.get("shadows", 1.0))
+    whites = float(data.get("whites", 98))
+    blacks = float(data.get("blacks", 2))
+
+    input_path = os.path.join(UPLOAD_FOLDER, image_id)
+    if not os.path.exists(input_path):
+        return jsonify({"error": "Image not found"}), 404
+
+    try:
+        output_path = process_with_light_adjustments(
+            input_path, dehaze, exposure_val, brightness, contrast, highlights,
+            shadows, whites, blacks
+        )
+    except Exception as e:
+        print("Error during light adjustments:", e)
+        return jsonify({"error": f"Error during processing: {str(e)}"}), 500
+
+    return jsonify({
+        "light_image_url": f"/static/processed/{os.path.basename(output_path)}",
+        "download_url": f"/download/{os.path.basename(output_path)}"
     })

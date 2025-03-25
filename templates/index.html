@@ -16,6 +16,7 @@
     <div id="tabs">
         <button id="tabHSL" class="active">HSL Adjustments</button>
         <button id="tabColor">Color Filters</button>
+        <button id="tabLight">Light Adjustments</button>
     </div>
 
     <!-- HSL Controls -->
@@ -63,6 +64,37 @@
             <input type="range" id="sat_color" min="0.5" max="2" step="0.1" value="1">
         </div>
         <button id="resetColorBtn">Reset Color Filters</button>
+
+    </div>
+
+ <!-- Light Adjustments Controls -->
+    <div id="lightControls" style="display:none;">
+        <label for="dehaze">Dehaze:</label>
+        <input type="range" id="dehaze" min="0" max="2" step="0.1" value="1">
+
+        <label for="exposure">Exposure:</label>
+        <input type="range" id="exposure" min="0.1" max="2" step="0.1" value="1">
+
+        <label for="brightness">Brightness:</label>
+        <input type="range" id="brightness" min="0.1" max="2" step="0.1" value="1">
+
+        <label for="contrast">Contrast:</label>
+        <input type="range" id="contrast" min="0.1" max="2" step="0.1" value="1">
+
+        <label for="highlights">Highlights:</label>
+        <input type="range" id="highlights" min="0.1" max="2" step="0.1" value="1">
+
+        <label for="shadows">Shadows:</label>
+        <input type="range" id="shadows" min="0.1" max="2" step="0.1" value="1">
+
+        <label for="whites">Whites:</label>
+        <input type="range" id="whites" min="90" max="100" step="1" value="98">
+
+        <label for="blacks">Blacks:</label>
+        <input type="range" id="blacks" min="0" max="10" step="1" value="2">
+
+        <button id="resetLightBtn">Reset Light</button>
+        <button id="downloadLightBtn">Download Light Image</button>
     </div>
 
     <img id="uploadedImage" src="" style="display:none; max-width:100%;">

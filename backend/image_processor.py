@@ -1,12 +1,12 @@
 import os
 import numpy as np
-from skimage import io
-from skimage.util import img_as_ubyte
+from skimage import io, filters
+from skimage.exposure import exposure
+from skimage.util import img_as_ubyte, img_as_float
 from skimage.color import rgb2hsv, hsv2rgb
 import torch
 from PIL import Image
 from torchvision import transforms
-import colorsys
 
 def process_with_skimage_color_range(input_path, hue_adj, sat_adj, lum_adj, selected_color):
     """
@@ -195,3 +195,65 @@ def process_with_temperature_tint(input_path, temperature_factor, red_factor, bl
     io.imsave(output_path, output_image)
 
     return output_path
+
+# ------------------ New Light Filters Functions ------------------
+def process_with_light_adjustments(input_path, dehaze, exposure_val, brightness, contrast, highlights, shadows, whites,
+                                   blacks):
+    image = img_as_float(io.imread(input_path))
+
+    image = apply_dehaze(image, dehaze)
+    image = adjust_exposure(image, 'gamma', exposure_val)
+    image = adjust_brightness(image, 'multiply', brightness)
+    image = adjust_contrast(image, contrast)
+    image = adjust_highlights_shadows(image, highlights, shadows)
+    image = adjust_whites_blacks(image, whites, blacks)
+
+    image = np.clip(image, 0, 1)
+    output_image = img_as_ubyte(image)
+    output_filename = "light_" + os.path.basename(input_path)
+    output_path = os.path.join("static/processed", output_filename)
+    io.imsave(output_path, output_image)
+    return output_path
+
+
+def apply_dehaze(image, intensity):
+    # استفاده از contrast stretching با استفاده از percentiles (مقدار intensity در اینجا به‌طور مستقیم اعمال نمی‌شود)
+    p_low, p_high = np.percentile(image, (2, 98))
+    return exposure.rescale_intensity(image, in_range=(p_low, p_high))
+
+
+def adjust_exposure(image, method, intensity):
+    if method == 'gamma':
+        return exposure.adjust_gamma(image, intensity)
+    elif method == 'log':
+        return exposure.adjust_log(image)
+    elif method == 'sigmoid':
+        return exposure.adjust_sigmoid(image)
+    else:
+        return exposure.adjust_gamma(image, intensity)
+
+
+def adjust_brightness(image, method, intensity):
+    # تنظیم روشنایی به صورت ضرب در مقدار intensity
+    return np.clip(image * intensity, 0, 1)
+
+
+def adjust_contrast(image, intensity):
+    # اعمال contrast stretching و ترکیب با تصویر اصلی بر اساس مقدار intensity
+    p2, p98 = np.percentile(image, (2, 98))
+    contrast_stretched = exposure.rescale_intensity(image, in_range=(p2, p98))
+    return image * (1 - intensity) + contrast_stretched * intensity
+
+
+def adjust_highlights_shadows(image, highlights, shadows):
+    # تنظیم highlights با cutoff بالا و shadows با cutoff پایین
+    highlight_adj = exposure.adjust_sigmoid(image, cutoff=0.8, gain=highlights)
+    shadow_adj = exposure.adjust_sigmoid(image, cutoff=0.3, gain=shadows)
+    return (highlight_adj + shadow_adj) / 2
+
+
+def adjust_whites_blacks(image, whites, blacks):
+    # استفاده از مقادیر درصدی برای تعیین نقاط سیاه و سفید
+    low = np.percentile(image, blacks)
+    high = np.percentile(image, whites)
+    return exposure.rescale_intensity(image, in_range=(low, high))
