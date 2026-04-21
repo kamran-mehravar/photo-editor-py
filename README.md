@@ -41,7 +41,7 @@ In short:
 ├── .idea/
 ├── backend/
 ├── venv/
-└── instructions.txt
+└── instructions.md
 ```
 
 ## Purpose of This Repository
